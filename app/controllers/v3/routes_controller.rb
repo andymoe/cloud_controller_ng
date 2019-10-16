@@ -4,6 +4,7 @@ require 'messages/route_show_message'
 require 'messages/route_update_message'
 require 'messages/route_update_destinations_message'
 require 'actions/update_route_destinations'
+require 'decorators/include_route_domain_decorator'
 require 'presenters/v3/route_presenter'
 require 'presenters/v3/route_destinations_presenter'
 require 'presenters/v3/paginated_list_presenter'
@@ -24,11 +25,15 @@ class RoutesController < ApplicationController
       eager_loaded_associations: Presenters::V3::RoutePresenter.associated_resources
     )
 
+    decorators = []
+    decorators << IncludeRouteDomainDecorator if IncludeRouteDomainDecorator.match?(message.include)
+
     render status: :ok, json: Presenters::V3::PaginatedListPresenter.new(
       presenter: Presenters::V3::RoutePresenter,
       paginated_result: SequelPaginator.new.get_page(dataset, message.try(:pagination_options)),
       path: '/v3/routes',
       message: message,
+      decorators: decorators,
     )
   end
 
